@@ -131,7 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ($name:expr, $value:expr, $sign:tt, $threshold:expr) => {
             if $value $sign $threshold {
                 errors.push(format!(
-                    "`{}: value {} {} threshold {}`",
+                    "`{}: value {:.4} {} threshold {}`",
                     $name,
                     $value,
                     stringify!($sign),
