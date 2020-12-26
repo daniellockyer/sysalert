@@ -21,9 +21,10 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - run: cargo build --release --locked
+    - run: echo "VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
     - uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/sysalert
-        asset_name: sysalert-${{ github.ref }}-x86_64-unknown-linux-gnu
+        asset_name: sysalert-${{ env.VERSION }}-x86_64-unknown-linux-gnu
         tag: ${{ github.ref }}
