@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use sysinfo::{DiskExt, System, SystemExt};
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Config {
     telegram_token: String,
     telegram_chat_id: String,
@@ -18,6 +19,7 @@ struct Config {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct LoadAverage {
     #[serde(default = "default_load_average")]
     one: f64,
@@ -46,6 +48,7 @@ impl Default for LoadAverage {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Disks {
     #[serde(default = "default_disks")]
     disks: Vec<String>,
@@ -71,6 +74,7 @@ impl Default for Disks {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Memory {
     #[serde(default = "default_memory_minimum")]
     minimum: f64,
