@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
 
     let s = System::new_all();
-    let hostname = hostname::get()?.into_string().unwrap();
+    let hostname = dbg!(hostname::get()?.into_string().unwrap());
     let mut errors = Vec::new();
 
     macro_rules! check_value {
@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(config_load_average) = config.load_average {
-        let system_load_avg = s.get_load_average();
+        let system_load_avg = dbg!(s.get_load_average());
 
         check_value!("load average, one", system_load_avg.one, >, config_load_average.one_max);
         check_value!("load average, five", system_load_avg.five, >, config_load_average.five_max);
@@ -61,14 +61,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(config_disks) = config.disks {
-        let system_disks = s.get_disks();
+        let system_disks = dbg!(s.get_disks());
 
         for d in system_disks {
             let mount = format!("{}", d.get_mount_point().to_string_lossy());
 
             if config_disks.disks.contains(&mount) {
-                let perc_free = (d.get_total_space() - d.get_available_space()) as f64
-                    / d.get_total_space() as f64;
+                let perc_free = dbg!(
+                    (d.get_total_space() - d.get_available_space()) as f64
+                        / d.get_total_space() as f64
+                );
                 let name = format!("mount {}", mount);
 
                 check_value!(name, perc_free, <, config_disks.minimum);
