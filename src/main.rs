@@ -1,6 +1,6 @@
-use isahc::prelude::*;
 use self_update::{cargo_crate_version, Status::Updated};
 use serde::Deserialize;
+use std::collections::HashMap;
 use sysinfo::{DiskExt, System, SystemExt};
 
 #[derive(Debug, Deserialize)]
@@ -88,24 +88,28 @@ impl Default for Memory {
     }
 }
 
-fn send_telegram(
-    config: &Config,
-    message: String,
-) -> Result<isahc::prelude::Response<isahc::Body>, isahc::Error> {
-    Request::post(format!(
+fn send_telegram(config: &Config, message: String) {
+    let url = format!(
         "https://api.telegram.org/bot{}/sendMessage",
         config.telegram_token
-    ))
-    .header("Content-Type", "application/json")
-    .body(format!(
-        r#"{{
-                "parse_mode": "MarkdownV2",
-                "chat_id": "{}",
-                "text": "{}"
-            }}"#,
-        config.telegram_chat_id, message
-    ))?
-    .send()
+    );
+
+    let mut map = HashMap::new();
+    map.insert("chat_id", config.telegram_chat_id.clone());
+    map.insert("parse_mode", "MarkdownV2".to_string());
+    map.insert("text", message);
+
+    match reqwest::blocking::Client::new()
+        .post(&url)
+        .json(&map)
+        .send()
+    {
+        Ok(r) => match r.status() {
+            reqwest::StatusCode::OK => (),
+            _ => eprintln!("{:#?}", r.text()),
+        },
+        Err(e) => eprintln!("{:#?}", e),
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -161,7 +165,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         send_telegram(
             &config,
             format!("❗ `{}`:\n{}", hostname, errors.join("\n")),
-        )?;
+        );
     }
 
     if !config.disable_self_update {
@@ -175,7 +179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build()?
             .update()?
         {
-            send_telegram(&config, format!("✅ `{} updated to {}`", hostname, version))?;
+            send_telegram(&config, format!("✅ `{} updated to {}`", hostname, version));
         }
     }
 
