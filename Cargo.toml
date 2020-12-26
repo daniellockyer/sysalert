@@ -1,0 +1,19 @@
+[package]
+name = "sysalert"
+version = "0.1.0"
+authors = ["Daniel Lockyer <hi@daniellockyer.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hostname = "0.3"
+reqwest = { version = "0.10", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+sysinfo = "0.15"
+toml = "0.5"
+
+[package.metadata.release]
+sign-commit = true
+sign-tag = true
+no-dev-version = true
