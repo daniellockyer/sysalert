@@ -13,6 +13,13 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - run: cargo build --release --locked
     - uses: svenstaro/upload-release-action@v1-release
       with:
