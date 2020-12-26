@@ -12,6 +12,7 @@ edition = "2018"
 [dependencies]
 hostname = "0.3"
 isahc = "0.9"
+self_update = "0.22"
 serde = { version = "1.0", features = ["derive"] }
 sysinfo = "0.15"
 toml = "0.5"

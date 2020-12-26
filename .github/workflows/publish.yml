@@ -5,19 +5,8 @@ on:
       - '*'
 jobs:
   publish:
-    name: Publish for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        name: [
-            linux
-        ]
-
-        include:
-          - name: linux
-            os: ubuntu-18.04
-            artifact_name: sysalert
-            asset_name: sysalert-linux-amd64
+    name: ubuntu-18.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
     - uses: actions-rs/toolchain@v1
@@ -28,6 +17,6 @@ jobs:
     - uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
+        file: target/release/sysalert
+        asset_name: sysalert-${{ github.ref }}-x86_64-unknown-linux-gnu
         tag: ${{ github.ref }}

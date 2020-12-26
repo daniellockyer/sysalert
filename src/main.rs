@@ -1,4 +1,5 @@
 use isahc::prelude::*;
+use self_update::{cargo_crate_version, Status::Updated};
 use serde::Deserialize;
 use sysinfo::{DiskExt, System, SystemExt};
 
@@ -6,6 +7,8 @@ use sysinfo::{DiskExt, System, SystemExt};
 struct Config {
     telegram_token: String,
     telegram_chat_id: String,
+    #[serde(default)]
+    disable_self_update: bool,
     #[serde(default)]
     memory: Memory,
     #[serde(default)]
@@ -85,6 +88,26 @@ impl Default for Memory {
     }
 }
 
+fn send_telegram(
+    config: &Config,
+    message: String,
+) -> Result<isahc::prelude::Response<isahc::Body>, isahc::Error> {
+    Request::post(format!(
+        "https://api.telegram.org/bot{}/sendMessage",
+        config.telegram_token
+    ))
+    .header("Content-Type", "application/json")
+    .body(format!(
+        r#"{{
+                "parse_mode": "MarkdownV2",
+                "chat_id": "{}",
+                "text": "{}"
+            }}"#,
+        config.telegram_chat_id, message
+    ))?
+    .send()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_file = std::env::var("CONFIG").unwrap_or("sysalert.toml".to_string());
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
@@ -132,25 +155,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let memory_perc_free = dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64);
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
-    if errors.len() == 0 {
-        return Ok(());
+    if errors.len() != 0 {
+        send_telegram(
+            &config,
+            format!("❗ `{}`:\n{}", hostname, errors.join("\n")),
+        )?;
     }
 
-    Request::post(format!(
-        "https://api.telegram.org/bot{}/sendMessage",
-        config.telegram_token
-    ))
-    .header("Content-Type", "application/json")
-    .body(format!(
-        r#"{{
-                "parse_mode": "MarkdownV2",
-                "chat_id": "{}",
-                "text": "{}"
-            }}"#,
-        config.telegram_chat_id,
-        format!("❗ `{}`:\n{}", hostname, errors.join("\n"))
-    ))?
-    .send()?;
+    if !config.disable_self_update {
+        if let Updated(version) = self_update::backends::github::Update::configure()
+            .repo_owner("daniellockyer")
+            .repo_name("sysalert")
+            .bin_name("sysalert")
+            .show_download_progress(true)
+            .no_confirm(true)
+            .current_version(cargo_crate_version!())
+            .build()?
+            .update()?
+        {
+            send_telegram(&config, format!("✅ `{} updated to {}`", hostname, version))?;
+        }
+    }
 
     Ok(())
 }
