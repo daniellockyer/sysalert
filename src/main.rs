@@ -1,5 +1,5 @@
+use isahc::prelude::*;
 use serde::Deserialize;
-use std::collections::HashMap;
 use sysinfo::{DiskExt, System, SystemExt};
 
 #[derive(Debug, Deserialize)]
@@ -136,28 +136,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let url = format!(
+    Request::post(format!(
         "https://api.telegram.org/bot{}/sendMessage",
         config.telegram_token
-    );
-
-    let mut map = HashMap::new();
-    map.insert("chat_id", config.telegram_chat_id);
-    map.insert("parse_mode", "MarkdownV2".to_string());
-    map.insert("disable_web_page_preview", "true".to_string());
-    map.insert("text", format!("❗ `{}`:\n{}", hostname, errors.join("\n")));
-
-    match reqwest::blocking::Client::new()
-        .post(&url)
-        .json(&map)
-        .send()
-    {
-        Ok(r) => match r.status() {
-            reqwest::StatusCode::OK => (),
-            _ => eprintln!("{:#?}", r.text()),
-        },
-        Err(e) => eprintln!("{:#?}", e),
-    }
+    ))
+    .header("Content-Type", "application/json")
+    .body(format!(
+        r#"{{
+                "parse_mode": "MarkdownV2",
+                "chat_id": "{}",
+                "text": "{}"
+            }}"#,
+        config.telegram_chat_id,
+        format!("❗ `{}`:\n{}", hostname, errors.join("\n"))
+    ))?
+    .send()?;
 
     Ok(())
 }
