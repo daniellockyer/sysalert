@@ -16,6 +16,10 @@ serde = { version = "1.0", features = ["derive"] }
 sysinfo = "0.15"
 toml = "0.5"
 
+[profile.release]
+opt-level = 'z'
+lto = true
+
 [package.metadata.release]
 sign-commit = true
 sign-tag = true
