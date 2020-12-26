@@ -111,6 +111,8 @@ fn send_telegram(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_file = std::env::var("CONFIG").unwrap_or("sysalert.toml".to_string());
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
+
+    println!("sysalert v{}", cargo_crate_version!());
     println!("{:#?}", config);
 
     let s = System::new_all();
