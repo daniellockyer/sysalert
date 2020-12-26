@@ -2,35 +2,93 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use sysinfo::{DiskExt, System, SystemExt};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Config {
     telegram_token: String,
     telegram_chat_id: String,
-    load_average: Option<LoadAverage>,
-    disks: Option<Disks>,
+    #[serde(default)]
+    memory: Memory,
+    #[serde(default)]
+    disks: Disks,
+    #[serde(default)]
+    load_average: LoadAverage,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct LoadAverage {
-    one_max: Option<f64>,
-    five_max: Option<f64>,
-    fifteen_max: Option<f64>,
+    #[serde(default = "default_load_average")]
+    one: f64,
+    #[serde(default = "default_load_average")]
+    five: f64,
+    #[serde(default = "default_load_average")]
+    fifteen: f64,
 }
 
-#[derive(Deserialize)]
+fn default_load_average() -> f64 {
+    let mut system = System::new();
+    system.refresh_cpu();
+    system.get_processors().len() as f64
+}
+
+impl Default for LoadAverage {
+    fn default() -> Self {
+        let value = default_load_average();
+
+        Self {
+            one: value,
+            five: value,
+            fifteen: value,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
 struct Disks {
+    #[serde(default = "default_disks")]
     disks: Vec<String>,
-    #[serde(default = "default_minimum_disk_space")]
+    #[serde(default = "default_disks_minimum")]
     minimum: f64,
 }
 
-fn default_minimum_disk_space() -> f64 {
+fn default_disks() -> Vec<String> {
+    vec!["/".to_string()]
+}
+
+fn default_disks_minimum() -> f64 {
     0.05
+}
+
+impl Default for Disks {
+    fn default() -> Self {
+        Self {
+            disks: default_disks(),
+            minimum: default_disks_minimum(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct Memory {
+    #[serde(default = "default_memory_minimum")]
+    minimum: f64,
+}
+
+fn default_memory_minimum() -> f64 {
+    0.05
+}
+
+impl Default for Memory {
+    fn default() -> Self {
+        Self {
+            minimum: default_memory_minimum(),
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_file = std::env::var("CONFIG").unwrap_or("sysalert.toml".to_string());
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
+    println!("{:#?}", config);
 
     let s = System::new_all();
     let hostname = dbg!(hostname::get()?.into_string().unwrap());
@@ -38,47 +96,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     macro_rules! check_value {
         ($name:expr, $value:expr, $sign:tt, $threshold:expr) => {
-            if let Some(t) = $threshold {
-                if $value $sign t {
-                    errors.push(format!(
-                        "*{}*: `value {} is {} threshold {}`",
-                        $name,
-                        $value,
-                        stringify!($sign),
-                        t
-                    ));
-                }
+            if $value $sign $threshold {
+                errors.push(format!(
+                    "`{}: value {} {} threshold {}`",
+                    $name,
+                    $value,
+                    stringify!($sign),
+                    $threshold
+                ));
             }
         };
     }
 
-    if let Some(config_load_average) = config.load_average {
-        let system_load_avg = dbg!(s.get_load_average());
+    let system_load_avg = dbg!(s.get_load_average());
+    check_value!("load average 1", system_load_avg.one, >, config.load_average.one);
+    check_value!("load average 5", system_load_avg.five, >, config.load_average.five);
+    check_value!(
+        "load_average 15",
+        system_load_avg.fifteen,
+        >,
+        config.load_average.fifteen
+    );
 
-        check_value!("load average, one", system_load_avg.one, >, config_load_average.one_max);
-        check_value!("load average, five", system_load_avg.five, >, config_load_average.five_max);
-        check_value!(
-            "load_average, fifteen",
-            system_load_avg.fifteen,
-            >,
-            config_load_average.fifteen_max
-        );
-    }
+    for d in dbg!(s.get_disks()) {
+        let mount = format!("{}", d.get_mount_point().to_string_lossy());
 
-    if let Some(config_disks) = config.disks {
-        let system_disks = dbg!(s.get_disks());
+        if config.disks.disks.contains(&mount) {
+            let perc_free = dbg!(d.get_available_space() as f64 / d.get_total_space() as f64);
+            let name = format!("mount {}", mount);
 
-        for d in system_disks {
-            let mount = format!("{}", d.get_mount_point().to_string_lossy());
-
-            if config_disks.disks.contains(&mount) {
-                let perc_free = dbg!((d.get_available_space()) as f64 / d.get_total_space() as f64);
-                let name = format!("mount {}", mount);
-
-                check_value!(name, perc_free, <, Some(config_disks.minimum));
-            }
+            check_value!(name, perc_free, <, config.disks.minimum);
         }
     }
+
+    let memory_perc_free = dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64);
+    check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
     if errors.len() == 0 {
         return Ok(());
