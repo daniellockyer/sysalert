@@ -20,7 +20,12 @@ struct LoadAverage {
 #[derive(Deserialize)]
 struct Disks {
     disks: Vec<String>,
-    minimum: Option<f64>,
+    #[serde(default = "default_minimum_disk_space")]
+    minimum: f64,
+}
+
+fn default_minimum_disk_space() -> f64 {
+    0.05
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -70,7 +75,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let perc_free = dbg!((d.get_available_space()) as f64 / d.get_total_space() as f64);
                 let name = format!("mount {}", mount);
 
-                check_value!(name, perc_free, <, config_disks.minimum);
+                check_value!(name, perc_free, <, Some(config_disks.minimum));
             }
         }
     }
