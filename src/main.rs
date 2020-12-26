@@ -25,15 +25,14 @@ struct Disks {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_file = std::env::var("CONFIG").unwrap_or("sysalert.toml".to_string());
-    let contents = std::fs::read_to_string(config_file)?;
-    let config: Config = toml::from_str(&contents)?;
-    let s = System::new_all();
+    let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
 
+    let s = System::new_all();
     let hostname = hostname::get()?.into_string().unwrap();
     let mut errors = Vec::new();
 
     macro_rules! check_value {
-        ($name:expr, $threshold:expr, $sign:tt, $value:expr) => {
+        ($name:expr, $value:expr, $sign:tt, $threshold:expr) => {
             if let Some(t) = $threshold {
                 if $value $sign t {
                     errors.push(format!(
@@ -51,19 +50,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(config_load_average) = config.load_average {
         let system_load_avg = s.get_load_average();
 
-        check_value!("load average, one", config_load_average.one_max, >, system_load_avg.one);
-        check_value!("load average, five", config_load_average.five_max, >, system_load_avg.five);
+        check_value!("load average, one", system_load_avg.one, >, config_load_average.one_max);
+        check_value!("load average, five", system_load_avg.five, >, config_load_average.five_max);
         check_value!(
             "load_average, fifteen",
-            config_load_average.fifteen_max,
+            system_load_avg.fifteen,
             >,
-            system_load_avg.fifteen
+            config_load_average.fifteen_max
         );
     }
 
     if let Some(config_disks) = config.disks {
         let system_disks = s.get_disks();
-        let minimum = config_disks.minimum;
 
         for d in system_disks {
             let mount = format!("{}", d.get_mount_point().to_string_lossy());
@@ -73,9 +71,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     / d.get_total_space() as f64;
                 let name = format!("mount {}", mount);
 
-                check_value!(name, minimum, <, perc_free);
+                check_value!(name, perc_free, <, config_disks.minimum);
             }
         }
+    }
+
+    if errors.len() == 0 {
+        return Ok(());
     }
 
     let url = format!(
