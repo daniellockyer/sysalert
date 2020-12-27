@@ -1,4 +1,4 @@
-use self_update::{cargo_crate_version, Status::Updated};
+use self_update::{backends::github::Update, cargo_crate_version, Status::Updated};
 use serde::Deserialize;
 use std::collections::HashMap;
 use sysinfo::{DiskExt, System, SystemExt};
@@ -168,7 +168,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if !config.disable_self_update {
-        if let Updated(version) = self_update::backends::github::Update::configure()
+        if let Updated(version) = Update::configure()
             .repo_owner("daniellockyer")
             .repo_name("sysalert")
             .bin_name("sysalert")
