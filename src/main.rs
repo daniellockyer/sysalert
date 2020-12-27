@@ -117,7 +117,7 @@ fn send_telegram(config: &Config, message: String) {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config_file = std::env::var("CONFIG").unwrap_or("sysalert.toml".to_string());
+    let config_file = std::env::var("CONFIG").unwrap_or_else(|_| "sysalert.toml".to_string());
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
 
     println!("sysalert v{}", cargo_crate_version!());
@@ -146,7 +146,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     check_value!("load 5", system_load_avg.five, >, config.load_average.five);
     check_value!("load 15", system_load_avg.fifteen, >, config.load_average.fifteen);
 
-    for d in dbg!(s.get_disks()) {
+    let disks = dbg!(s.get_disks());
+    for d in disks {
         let mount = format!("{}", d.get_mount_point().to_string_lossy());
 
         if config.disks.disks.contains(&mount) {
@@ -160,7 +161,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let memory_perc_free = dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64);
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
-    if errors.len() != 0 {
+    if !errors.is_empty() {
         send_telegram(
             &config,
             format!("❗ `{}`:\n{}", hostname, errors.join("\n")),
