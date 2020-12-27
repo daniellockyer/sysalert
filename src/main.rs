@@ -131,7 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ($name:expr, $value:expr, $sign:tt, $threshold:expr) => {
             if $value $sign $threshold {
                 errors.push(format!(
-                    "`{}: value {:.4} {} threshold {}`",
+                    "`{}: {:.4} {} threshold {}`",
                     $name,
                     $value,
                     stringify!($sign),
@@ -142,14 +142,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let system_load_avg = dbg!(s.get_load_average());
-    check_value!("load average 1", system_load_avg.one, >, config.load_average.one);
-    check_value!("load average 5", system_load_avg.five, >, config.load_average.five);
-    check_value!(
-        "load_average 15",
-        system_load_avg.fifteen,
-        >,
-        config.load_average.fifteen
-    );
+    check_value!("load 1", system_load_avg.one, >, config.load_average.one);
+    check_value!("load 5", system_load_avg.five, >, config.load_average.five);
+    check_value!("load 15", system_load_avg.fifteen, >, config.load_average.fifteen);
 
     for d in dbg!(s.get_disks()) {
         let mount = format!("{}", d.get_mount_point().to_string_lossy());
