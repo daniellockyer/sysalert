@@ -26,3 +26,4 @@ sign-commit = true
 sign-tag = true
 no-dev-version = true
 disable-publish = true
+pre-release-commit-message = "v{{version}}"
