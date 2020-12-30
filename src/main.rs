@@ -158,7 +158,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let memory_perc_free = dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64);
+    let memory_perc_free = if s.get_available_memory() as f64 == 0.0 {
+        dbg!((s.get_total_memory() - s.get_used_memory()) as f64 / s.get_total_memory() as f64)
+    } else {
+        dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64)
+    };
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
     if !errors.is_empty() {
