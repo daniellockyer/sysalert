@@ -20,7 +20,7 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - run: apt install musl-tools
+    - run: sudo apt-get install -y musl
     - run: cargo build --release --locked
     - run: echo "VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
     - uses: svenstaro/upload-release-action@v1-release
