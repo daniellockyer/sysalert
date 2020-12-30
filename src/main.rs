@@ -173,6 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .repo_owner("daniellockyer")
             .repo_name("sysalert")
             .bin_name("sysalert")
+            .target("x86_64-unknown-linux-musl")
             .show_download_progress(true)
             .no_confirm(true)
             .current_version(cargo_crate_version!())
