@@ -27,6 +27,6 @@ jobs:
     - uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/sysalert
+        file: target/x86_64-unknown-linux-musl/release/sysalert
         asset_name: sysalert-${{ env.VERSION }}-x86_64-unknown-linux-musl
         tag: ${{ github.ref }}
