@@ -1,7 +1,7 @@
 use self_update::{backends::github::Update, cargo_crate_version, Status::Updated};
 use serde::Deserialize;
 use std::collections::HashMap;
-use sysinfo::{DiskExt, System, SystemExt};
+use sysinfo::{DiskExt, ProcessExt, System, SystemExt};
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -10,6 +10,8 @@ struct Config {
     telegram_chat_id: String,
     #[serde(default)]
     disable_self_update: bool,
+    #[serde(default)]
+    disable_mysql_memory_check: bool,
     #[serde(default)]
     memory: Memory,
     #[serde(default)]
@@ -164,6 +166,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(s.available_memory() as f64 / s.total_memory() as f64)
     };
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
+
+    if !config.disable_self_update {
+        for process in s.process_by_name("mysqld") {
+            check_value!("mysqld", process.memory(), >, s.total_memory() / 2);
+        }
+        for process in s.process_by_name("mariadbd") {
+            check_value!("mariadbd", process.memory(), >, s.total_memory() / 2);
+        }
+    }
 
     if !errors.is_empty() {
         send_telegram(
