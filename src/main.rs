@@ -32,7 +32,7 @@ struct LoadAverage {
 fn default_load_average() -> f64 {
     let mut system = System::new();
     system.refresh_cpu();
-    system.get_processors().len() as f64
+    system.processors().len() as f64
 }
 
 impl Default for LoadAverage {
@@ -141,27 +141,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
     }
 
-    let system_load_avg = dbg!(s.get_load_average());
+    let system_load_avg = dbg!(s.load_average());
     check_value!("load 1", system_load_avg.one, >, config.load_average.one);
     check_value!("load 5", system_load_avg.five, >, config.load_average.five);
     check_value!("load 15", system_load_avg.fifteen, >, config.load_average.fifteen);
 
-    let disks = dbg!(s.get_disks());
+    let disks = dbg!(s.disks());
     for d in disks {
-        let mount = format!("{}", d.get_mount_point().to_string_lossy());
+        let mount = format!("{}", d.mount_point().to_string_lossy());
 
         if config.disks.disks.contains(&mount) {
-            let perc_free = dbg!(d.get_available_space() as f64 / d.get_total_space() as f64);
+            let perc_free = dbg!(d.available_space() as f64 / d.total_space() as f64);
             let name = format!("mount {}", mount);
 
             check_value!(name, perc_free, <, config.disks.minimum);
         }
     }
 
-    let memory_perc_free = if s.get_available_memory() as f64 == 0.0 {
-        dbg!((s.get_total_memory() - s.get_used_memory()) as f64 / s.get_total_memory() as f64)
+    let memory_perc_free = if s.available_memory() as f64 == 0.0 {
+        dbg!((s.total_memory() - s.used_memory()) as f64 / s.total_memory() as f64)
     } else {
-        dbg!(s.get_available_memory() as f64 / s.get_total_memory() as f64)
+        dbg!(s.available_memory() as f64 / s.total_memory() as f64)
     };
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
