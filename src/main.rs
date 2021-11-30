@@ -144,7 +144,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let system_load_avg = dbg!(s.load_average());
-    check_value!("load 1", system_load_avg.one, >, config.load_average.one);
+    //check_value!("load 1", system_load_avg.one, >, config.load_average.one);
     check_value!("load 5", system_load_avg.five, >, config.load_average.five);
     check_value!("load 15", system_load_avg.fifteen, >, config.load_average.fifteen);
 
