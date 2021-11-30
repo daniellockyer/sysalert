@@ -842,7 +842,7 @@ dependencies = [
 
 [[package]]
 name = "sysalert"
-version = "0.1.18"
+version = "0.1.19"
 dependencies = [
  "reqwest",
  "self_update",
