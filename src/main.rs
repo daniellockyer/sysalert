@@ -167,7 +167,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
-    if !config.disable_self_update {
+    if !config.disable_mysql_memory_check {
         for process in s.process_by_name("mysqld") {
             check_value!("mysqld", process.memory(), >, s.total_memory() / 2);
         }
