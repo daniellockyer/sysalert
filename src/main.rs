@@ -197,7 +197,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build()?
             .update()?
         {
-            send_telegram(&config, format!("✅ `{} updated to {}`", hostname, version));
+            send_telegram(
+                &config,
+                format!("✅ `{} updated to v{}`", hostname, version),
+            );
         }
     }
 
