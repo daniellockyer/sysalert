@@ -169,10 +169,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !config.disable_mysql_memory_check {
         for process in s.process_by_name("mysqld") {
-            check_value!("mysqld", process.memory(), >, s.total_memory() / 2);
+            let process_memory = dbg!(process.memory());
+            check_value!("mysqld", process_memory, >, s.total_memory() / 2);
         }
         for process in s.process_by_name("mariadbd") {
-            check_value!("mariadbd", process.memory(), >, s.total_memory() / 2);
+            let process_memory = dbg!(process.memory());
+            check_value!("mariadbd", process_memory, >, s.total_memory() / 2);
         }
     }
 
