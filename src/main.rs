@@ -126,7 +126,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:#?}", config);
 
     let s = System::new_all();
-    let hostname = dbg!(hostname::get()?.into_string().unwrap());
+    let hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
     let mut errors = Vec::new();
 
     macro_rules! check_value {
