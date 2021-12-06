@@ -166,7 +166,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                if !is_running {
+                if is_running {
+                    println!("{} is running", $names.join(", "));
+                } else {
                     errors.push(format!("`{} is not running`", $names.join(", ")));
                 }
             }
