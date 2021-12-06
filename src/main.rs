@@ -11,13 +11,24 @@ struct Config {
     #[serde(default)]
     disable_self_update: bool,
     #[serde(default)]
-    disable_mysql_memory_check: bool,
-    #[serde(default)]
     memory: Memory,
     #[serde(default)]
     disks: Disks,
     #[serde(default)]
     load_average: LoadAverage,
+    #[serde(default)]
+    process_checks: ProcessChecks,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProcessChecks {
+    #[serde(default)]
+    disable_mysql_check: bool,
+    #[serde(default)]
+    disable_mysql_memory_check: bool,
+    #[serde(default)]
+    disable_web_server_check: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -143,6 +154,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
     }
 
+    macro_rules! check_running {
+        ($config:expr, $names:expr) => {
+            if !$config {
+                let mut is_running = false;
+
+                for name in $names {
+                    let process_count = s.process_by_name(name);
+                    if !process_count.is_empty() {
+                        is_running = true;
+                    }
+                }
+
+                if !is_running {
+                    errors.push(format!("`{} is not running`", $names.join(", ")));
+                }
+            }
+        };
+    }
+
     let system_load_avg = dbg!(s.load_average());
     //check_value!("load 1", system_load_avg.one, >, config.load_average.one);
     check_value!("load 5", system_load_avg.five, >, config.load_average.five);
@@ -167,7 +197,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     check_value!("memory", memory_perc_free, <, config.memory.minimum);
 
-    if !config.disable_mysql_memory_check {
+    check_running!(
+        config.process_checks.disable_web_server_check,
+        &["apache2", "nginx"]
+    );
+    check_running!(
+        config.process_checks.disable_mysql_check,
+        &["mariadbd", "mysqld"]
+    );
+
+    if !config.process_checks.disable_mysql_memory_check {
         for process in s.process_by_name("mysqld") {
             let process_memory = dbg!(process.memory());
             check_value!("mysqld", process_memory, >, s.total_memory() / 2);
