@@ -142,14 +142,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:#?}", config);
 
     let s = System::new_all();
-    let hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
+    let mut hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
 
     if let Ok(ifas) = list_afinet_netifas() {
-        if let Some((name, ipaddr)) = ifas
+        if let Some((_, ipaddr)) = ifas
             .iter()
-            .find(|(_name, ipaddr)| ipaddr.is_global() && matches!(ipaddr, IpAddr::V4(_)))
+            .find(|(_, ipaddr)| ipaddr.is_global() && matches!(ipaddr, IpAddr::V4(_)))
         {
-            println!("{}: {:?}", name, ipaddr);
+            hostname = format!("{} - {:?}", hostname, ipaddr);
         }
     }
 
