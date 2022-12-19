@@ -1,3 +1,8 @@
+#![feature(ip)]
+
+use std::net::IpAddr;
+
+use local_ip_address::list_afinet_netifas;
 use self_update::{backends::github::Update, cargo_crate_version, Status::Updated};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -138,6 +143,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let s = System::new_all();
     let hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
+
+    if let Ok(ifas) = list_afinet_netifas() {
+        if let Some((name, ipaddr)) = ifas
+            .iter()
+            .find(|(_name, ipaddr)| ipaddr.is_global() && matches!(ipaddr, IpAddr::V4(_)))
+        {
+            println!("{}: {:?}", name, ipaddr);
+        }
+    }
+
     let mut errors = Vec::new();
 
     macro_rules! check_value {
