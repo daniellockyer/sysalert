@@ -28,7 +28,7 @@ jobs:
 
     - run: sudo apt-get install -y musl-tools
     - run: cargo +nightly build --release --locked --target x86_64-unknown-linux-musl
-    - run: echo "VERSION=$(echo ${GITHUB_REF:10})" >> $GITHUB_ENV
+    - run: echo "VERSION=$(git describe --abbrev=0)" >> $GITHUB_ENV
 
     - name: Upload binary to commit artifacts
       uses: actions/upload-artifact@v3
