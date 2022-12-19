@@ -186,9 +186,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if config.disks.disks.contains(&mount) {
             let perc_free = dbg!(d.available_space() as f64 / d.total_space() as f64);
-            let name = format!("mount {}", mount);
-
-            check_value!(name, perc_free, <, config.disks.minimum);
+            check_value!(mount, perc_free, <, config.disks.minimum);
         }
     }
 
