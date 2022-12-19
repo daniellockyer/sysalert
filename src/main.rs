@@ -121,16 +121,12 @@ fn send_telegram(config: &Config, message: String) {
     map.insert("parse_mode", "MarkdownV2".to_string());
     map.insert("text", message);
 
-    match reqwest::blocking::Client::new()
-        .post(&url)
-        .json(&map)
-        .send()
-    {
+    match reqwest::blocking::Client::new().post(url).json(&map).send() {
         Ok(r) => match r.status() {
             reqwest::StatusCode::OK => (),
             _ => eprintln!("{:#?}", r.text()),
         },
-        Err(e) => eprintln!("{:#?}", e),
+        Err(e) => eprintln!("{e:#?}"),
     }
 }
 
@@ -139,7 +135,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config: Config = toml::from_str(&std::fs::read_to_string(config_file)?)?;
 
     println!("sysalert v{}", cargo_crate_version!());
-    println!("{:#?}", config);
+    println!("{config:#?}");
 
     let s = System::new_all();
     let hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
@@ -149,7 +145,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .iter()
             .find(|(_, ipaddr)| ipaddr.is_global() && matches!(ipaddr, IpAddr::V4(_)))
         {
-            format!("{:?}", ipaddr)
+            format!("{ipaddr:?}")
         } else {
             "unknown".to_owned()
         }
@@ -171,7 +167,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         {
             send_telegram(
                 &config,
-                format!("✅ `{} ({}) updated to v{}`", hostname, ip_addr, version),
+                format!("✅ `{hostname} ({ip_addr}) updated to v{version}`"),
             );
         }
     }
