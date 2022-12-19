@@ -153,6 +153,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    if !config.disable_self_update {
+        if let Updated(version) = Update::configure()
+            .repo_owner("daniellockyer")
+            .repo_name("sysalert")
+            .bin_name("sysalert")
+            .target("x86_64-unknown-linux-musl")
+            .show_download_progress(true)
+            .no_confirm(true)
+            .current_version(cargo_crate_version!())
+            .build()?
+            .update()?
+        {
+            send_telegram(
+                &config,
+                format!("✅ `{} updated to v{}`", hostname, version),
+            );
+        }
+    }
+
     let mut errors = Vec::new();
 
     macro_rules! check_value {
@@ -237,25 +256,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &config,
             format!("❗ `{}`:\n{}", hostname, errors.join("\n")),
         );
-    }
-
-    if !config.disable_self_update {
-        if let Updated(version) = Update::configure()
-            .repo_owner("daniellockyer")
-            .repo_name("sysalert")
-            .bin_name("sysalert")
-            .target("x86_64-unknown-linux-musl")
-            .show_download_progress(true)
-            .no_confirm(true)
-            .current_version(cargo_crate_version!())
-            .build()?
-            .update()?
-        {
-            send_telegram(
-                &config,
-                format!("✅ `{} updated to v{}`", hostname, version),
-            );
-        }
     }
 
     Ok(())
