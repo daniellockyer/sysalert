@@ -264,7 +264,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !errors.is_empty() {
         send_telegram(
             &config,
-            format!("❗ `{}` - `{}`:\n{}", hostname, ip_addr, errors.join("\n")),
+            format!("❗ `{}` - `{}`\n{}", hostname, ip_addr, errors.join("\n")),
         );
     }
 
