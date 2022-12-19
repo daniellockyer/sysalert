@@ -142,16 +142,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:#?}", config);
 
     let s = System::new_all();
-    let mut hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
+    let hostname = dbg!(s.host_name().unwrap_or_else(|| "unknown".to_string()));
 
-    if let Ok(ifas) = list_afinet_netifas() {
+    let ip_addr = if let Ok(ifas) = list_afinet_netifas() {
         if let Some((_, ipaddr)) = ifas
             .iter()
             .find(|(_, ipaddr)| ipaddr.is_global() && matches!(ipaddr, IpAddr::V4(_)))
         {
-            hostname = format!("{} - {:?}", hostname, ipaddr);
+            format!("{:?}", ipaddr)
+        } else {
+            "unknown".to_owned()
         }
-    }
+    } else {
+        "unknown".to_owned()
+    };
 
     if !config.disable_self_update {
         if let Updated(version) = Update::configure()
@@ -167,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         {
             send_telegram(
                 &config,
-                format!("✅ `{} updated to v{}`", hostname, version),
+                format!("✅ `{} ({}) updated to v{}`", hostname, ip_addr, version),
             );
         }
     }
@@ -254,7 +258,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !errors.is_empty() {
         send_telegram(
             &config,
-            format!("❗ `{}`:\n{}", hostname, errors.join("\n")),
+            format!("❗ `{}` - `{}`:\n{}", hostname, ip_addr, errors.join("\n")),
         );
     }
 
