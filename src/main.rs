@@ -50,7 +50,7 @@ struct LoadAverage {
 fn default_load_average() -> f64 {
     let mut system = System::new();
     system.refresh_cpu();
-    system.processors().len() as f64
+    system.cpus().len() as f64
 }
 
 impl Default for LoadAverage {
@@ -198,8 +198,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut is_running = false;
 
                 for name in $names {
-                    let process_count = s.process_by_name(name);
-                    if !process_count.is_empty() {
+                    let process_count = s.processes_by_name(name);
+                    let mut i = 0;
+
+                    for _ in process_count {
+                        i += 1;
+                    }
+
+                    if i != 0 {
                         is_running = true;
                     }
                 }
@@ -245,11 +251,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     if !config.process_checks.disable_mysql_memory_check {
-        for process in s.process_by_name("mysqld") {
+        for process in s.processes_by_name("mysqld") {
             let process_memory = dbg!(process.memory());
             check_value!("mysqld", process_memory, >, s.total_memory() / 2);
         }
-        for process in s.process_by_name("mariadbd") {
+        for process in s.processes_by_name("mariadbd") {
             let process_memory = dbg!(process.memory());
             check_value!("mariadbd", process_memory, >, s.total_memory() / 2);
         }
