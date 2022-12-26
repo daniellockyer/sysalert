@@ -257,6 +257,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    let time_mins = 10;
+    if s.uptime() < time_mins * 60 {
+        errors.push(format!("rebooted within the last {time_mins}"));
+    }
+
     if !errors.is_empty() {
         send_telegram(
             &config,
