@@ -797,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "sysalert"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "local-ip-address",
  "reqwest",
