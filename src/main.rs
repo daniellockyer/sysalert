@@ -257,13 +257,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    if s.processes()
+    let b2_processes_count = s
+        .processes()
         .values()
         .filter(|p| p.name().contains("b2"))
-        .count()
-        > 1
-    {
-        errors.push(format!("`b2 is running {} times`"));
+        .count();
+
+    if b2_processes_count > 1 {
+        errors.push(format!("`b2 is running {} times`", b2_processes_count));
     }
 
     let time_mins = 10;
