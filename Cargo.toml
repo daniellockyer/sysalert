@@ -24,6 +24,5 @@ lto = true
 [package.metadata.release]
 sign-commit = true
 sign-tag = true
-no-dev-version = true
-disable-publish = true
+publish = false
 pre-release-commit-message = "v{{version}}"
