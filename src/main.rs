@@ -257,6 +257,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    if s.processes()
+        .values()
+        .filter(|p| p.name().contains("b2"))
+        .count()
+        > 1
+    {
+        errors.push(format!("`b2 is running {} times`"));
+    }
+
     let time_mins = 10;
     if s.uptime() < time_mins * 60 {
         errors.push(format!("rebooted within the last {time_mins}"));
