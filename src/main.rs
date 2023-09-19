@@ -165,10 +165,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build()?
             .update()?
         {
-            send_telegram(
-                &config,
-                format!("✅ `{hostname} ({ip_addr}) updated to v{version}`"),
-            );
+            let mut message = format!("✅ `{hostname} ({ip_addr}) updated to v{version}`");
 
             // read contents from /var/spool/cron/crontabs/root file
             match std::fs::read_to_string("/var/spool/cron/crontabs/root") {
@@ -180,18 +177,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .collect::<Vec<String>>()
                         .join("\n");
 
-                    send_telegram(
-                        &config,
-                        format!("📝 `{hostname} ({ip_addr})`\n```{lines}```"),
-                    );
+                    message += &format!("\n```{lines}```");
                 }
                 Err(e) => {
-                    send_telegram(
-                        &config,
-                        format!("`{hostname} ({ip_addr}) Error reading crontab: {}", e),
-                    );
+                    message += &format!("\n```{}```", e);
                 }
             }
+
+            send_telegram(&config, message);
         }
     }
 
