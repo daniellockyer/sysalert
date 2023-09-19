@@ -176,7 +176,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let lines = result
                         .lines()
                         .filter(|line| !line.starts_with("#") && !line.trim().is_empty())
-                        .collect()
+                        .map(String::from)
+                        .collect::<Vec<String>>()
                         .join("\n");
 
                     send_telegram(
