@@ -169,6 +169,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &config,
                 format!("✅ `{hostname} ({ip_addr}) updated to v{version}`"),
             );
+
+            // read contents from /var/spool/cron/crontabs/root file
+            match std::fs::read_to_string("/var/spool/cron/crontabs/root") {
+                Ok(result) => {
+                    let lines = result
+                        .lines()
+                        .filter(|line| !line.starts_with("#") && !line.trim().is_empty())
+                        .collect()
+                        .join("\n");
+
+                    send_telegram(
+                        &config,
+                        format!("📝 `{hostname} ({ip_addr}) crontab:`\n```{lines}```"),
+                    );
+                }
+                Err(e) => eprintln!("Error reading crontab: {}", e),
+            }
         }
     }
 
