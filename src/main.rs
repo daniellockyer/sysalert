@@ -185,7 +185,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         format!("📝 `{hostname} ({ip_addr}) crontab:`\n```{lines}```"),
                     );
                 }
-                Err(e) => eprintln!("Error reading crontab: {}", e),
+                Err(e) => {
+                    send_telegram(
+                        &config,
+                        format!("`{hostname} ({ip_addr}) Error reading crontab: {}", e)
+                    );
+                }
             }
         }
     }
