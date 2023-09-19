@@ -175,20 +175,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Ok(result) => {
                     let lines = result
                         .lines()
-                        .filter(|line| !line.starts_with("#") && !line.trim().is_empty())
+                        .filter(|line| line.contains("b2"))
                         .map(String::from)
                         .collect::<Vec<String>>()
                         .join("\n");
 
                     send_telegram(
                         &config,
-                        format!("📝 `{hostname} ({ip_addr}) crontab:`\n```{lines}```"),
+                        format!("📝 `{hostname} ({ip_addr})`\n```{lines}```"),
                     );
                 }
                 Err(e) => {
                     send_telegram(
                         &config,
-                        format!("`{hostname} ({ip_addr}) Error reading crontab: {}", e)
+                        format!("`{hostname} ({ip_addr}) Error reading crontab: {}", e),
                     );
                 }
             }
