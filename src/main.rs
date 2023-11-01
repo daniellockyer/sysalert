@@ -283,6 +283,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         errors.push(format!("`b2 is running {} times`", b2_processes_count));
     }
 
+    let backup_file = "/tmp/backup.heartbeat";
+
+    match fs::metadata(backup_file) {
+        Ok(metadata) => {
+            if let Ok(time) = metadata.modified() {
+                if let Ok(time_sec) = time.elapsed() {
+                    // If the time is older than 24 hours and 15 minutes, add an alert
+                    if time_sec.as_secs() > ((60 * 60 * 24) + (60 * 15)) {
+                        errors.push(format!("`{} has expired`", backup_file));
+                    }
+                } else {
+                    errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
+                }
+            } else {
+                errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
+            }
+        }
+        Err(e) => errors.push(format!("`Heartbeat error: {}`", e)),
+    }
+
     let time_mins = 10;
     if s.uptime() < time_mins * 60 {
         errors.push(format!("rebooted within the last {time_mins}"));
