@@ -24,7 +24,12 @@ struct Config {
     load_average: LoadAverage,
     #[serde(default)]
     process_checks: ProcessChecks,
+    #[serde(default)]
+    heartbeats: Heartbeats,
 }
+
+#[derive(Debug, Default, Deserialize)]
+struct Heartbeats(HashMap<String, String>);
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -290,24 +295,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         errors.push(format!("`b2 is running {} times`", b2_processes_count));
     }
 
-    let backup_file = "/tmp/backup.heartbeat";
-
-    match fs::metadata(backup_file) {
-        Ok(metadata) => {
-            if let Ok(time) = metadata.modified() {
-                if let Ok(time_sec) = time.elapsed() {
-                    // If the time is older than 24 hours and 15 minutes, add an alert
-                    if time_sec.as_secs() > ((60 * 60 * 24) + (60 * 15)) {
-                        errors.push(format!("`{} has expired`", backup_file));
+    macro_rules! check_heartbeat {
+        ($heartbeat_file:expr) => {
+            match fs::metadata($heartbeat_file) {
+                Ok(metadata) => {
+                    if let Ok(time) = metadata.modified() {
+                        if let Ok(time_sec) = time.elapsed() {
+                            // If the time is older than 24 hours and 15 minutes, add an alert
+                            if time_sec.as_secs() > ((60 * 60 * 24) + (60 * 15)) {
+                                errors.push(format!("`{} has expired`", $heartbeat_file));
+                            }
+                        } else {
+                            errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
+                        }
+                    } else {
+                        errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
                     }
-                } else {
-                    errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
                 }
-            } else {
-                errors.push(format!("`{}`", "Heartbeat timestamp not supported"));
-            }
+                Err(e) => errors.push(format!("`Heartbeat error: {}`", e)),
+            };
         }
-        Err(e) => errors.push(format!("`Heartbeat error: {}`", e)),
+    }
+
+    check_heartbeat!("/tmp/backup.heartbeat");
+
+    for (_name, path) in &config.heartbeats.0 {
+        check_heartbeat!(&path);
     }
 
     let time_mins = 10;
